@@ -60,5 +60,4 @@ public class ClienteServiceImpl implements ClienteService {
         cliente.setEndereco(endereco);
         clienteRepository.save(cliente);
     }
-
 }
