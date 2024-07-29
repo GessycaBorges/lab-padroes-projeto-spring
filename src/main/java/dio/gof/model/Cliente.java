@@ -6,18 +6,17 @@ import javax.persistence.*;
 public class Cliente {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long cpf;
     private String nome;
     @ManyToOne
     private Endereco endereco;
 
-    public Long getId() {
-        return id;
+    public Long getCpf() {
+        return cpf;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setCpf(Long cpf) {
+        this.cpf = cpf;
     }
 
     public String getNome() {

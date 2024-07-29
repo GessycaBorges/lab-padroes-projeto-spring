@@ -27,37 +27,65 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public Cliente buscarPorId(Long id) {
-        Optional<Cliente> cliente = clienteRepository.findById(id);
-        return cliente.get();
+    public Cliente buscarPorCpf(Long cpf) throws Exception {
+        Optional<Cliente> cliente = clienteRepository.findById(cpf);
+        if (cliente.isPresent()) {
+            return cliente.get();
+        }
+        throw new RuntimeException("Cliente não encontrado.");
     }
 
     @Override
-    public void inserir(Cliente cliente) {
-        salvarClienteComCep(cliente);
-    }
-
-    @Override
-    public void atualizar(Long id, Cliente cliente) {
-        Optional<Cliente> clienteBd = clienteRepository.findById(id);
-        if (clienteBd.isPresent()) {
+    public void inserir(Cliente cliente) throws Exception {
+        if (!clienteRepository.existsById(cliente.getCpf())) {
             salvarClienteComCep(cliente);
+        } else {
+            throw new RuntimeException("Cliente já cadastrado.");
         }
     }
 
     @Override
-    public void deletar(Long id) {
-        clienteRepository.deleteById(id);
+    public void atualizar(Long cpf, Cliente cliente) {
+        Optional<Cliente> clienteBd = clienteRepository.findById(cpf);
+        if (clienteBd.isPresent()) {
+            Cliente clienteEncontrado = clienteBd.get();
+            if (cliente.getNome() != null) {
+                clienteEncontrado.setNome(cliente.getNome());
+            }
+            if (cliente.getEndereco() != null && cliente.getEndereco().getCep() != null) {
+                try {
+                    salvarClienteComCep(cliente);
+                } catch (RuntimeException e) {
+                    throw new RuntimeException("Falha ao atualizar o endereço com o CEP fornecido.", e);
+                }
+            }
+            clienteRepository.save(clienteEncontrado);
+        } else {
+            throw new RuntimeException("Cliente não encontrado com o Cpf: " + cpf);
+        }
+    }
+
+    @Override
+    public void deletar(Long cpf) {
+        clienteRepository.deleteById(cpf);
     }
 
     private void salvarClienteComCep(Cliente cliente) {
         String cep = cliente.getEndereco().getCep();
-        Endereco endereco = enderecoRepository.findById(cep).orElseGet(() -> {
-            Endereco novoEndereco = viaCepService.consultarCep(cep);
-            enderecoRepository.save(novoEndereco);
-            return novoEndereco;
-        });
-        cliente.setEndereco(endereco);
-        clienteRepository.save(cliente);
+        try {
+            Endereco endereco = enderecoRepository.findById(cep).orElseGet(() -> {
+                Endereco novoEndereco = viaCepService.consultarCep(cep);
+
+                if (novoEndereco == null || novoEndereco.getCep() == null || novoEndereco.getCep().isEmpty()) {
+                    throw new RuntimeException("Endereço não encontrado para o CEP: " + cep);
+                }
+                enderecoRepository.save(novoEndereco);
+                return novoEndereco;
+            });
+            cliente.setEndereco(endereco);
+            clienteRepository.save(cliente);
+        } catch (RuntimeException e){
+            throw new RuntimeException("Erro ao buscar o CEP: " + cep, e);
+        }
     }
 }

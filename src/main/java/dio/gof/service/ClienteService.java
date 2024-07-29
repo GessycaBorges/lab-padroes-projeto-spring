@@ -6,12 +6,12 @@ public interface ClienteService {
 
     Iterable<Cliente> buscarTodos();
 
-    Cliente buscarPorId(Long id);
+    Cliente buscarPorCpf(Long cpf) throws Exception;
 
-    void inserir(Cliente cliente);
+    void inserir(Cliente cliente) throws Exception;
 
-    void atualizar(Long id, Cliente cliente);
+    void atualizar(Long cpf, Cliente cliente);
 
-    void deletar(Long id);
+    void deletar(Long cpf);
 
 }
